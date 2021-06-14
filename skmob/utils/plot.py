@@ -9,7 +9,7 @@ from geojson import LineString
 import geopandas as gpd
 import json
 import warnings
-
+STACKLEVEL = 2
 
 # COLOR = {
 #     0: '#FF0000',  # Red
@@ -78,59 +78,45 @@ traj_style_function = lambda weight, color, opacity, dashArray: \
     (lambda feature: dict(color=color, weight=weight, opacity=opacity, dashArray=dashArray))
 
 
-def plot_trajectory(tdf, map_f=None, max_users=10, max_points=1000, style_function=traj_style_function,
+def plot_trajectory(tdf, map_f=None, max_users=None, max_points=1000, style_function=traj_style_function,
                     tiles='cartodbpositron', zoom=12, hex_color=None, weight=2, opacity=0.75, dashArray='0, 0',
                     start_end_markers=True, control_scale=True):
-
-
     """
     :param tdf: TrajDataFrame
          TrajDataFrame to be plotted.
-
     :param map_f: folium.Map
         `folium.Map` object where the trajectory will be plotted. If `None`, a new map will be created.
-
     :param max_users: int
         maximum number of users whose trajectories should be plotted.
-
     :param max_points: int
         maximum number of points per user to plot.
         If necessary, a user's trajectory will be down-sampled to have at most `max_points` points.
-
     :param style_function: lambda function
         function specifying the style (weight, color, opacity) of the GeoJson object.
-
     :param tiles: str
         folium's `tiles` parameter.
-
     :param zoom: int
         initial zoom.
-
     :param hex_color: str
         hex color of the trajectory line. If `None` a random color will be generated for each trajectory.
-
     :param weight: float
         thickness of the trajectory line.
-
     :param opacity: float
         opacity (alpha level) of the trajectory line.
-
     :param dashArray: str
         style of the trajectory line: '0, 0' for a solid trajectory line, '5, 5' for a dashed line
         (where dashArray='size of segment, size of spacing').
-
     :param start_end_markers: bool
         add markers on the start and end points of the trajectory.
-
     :param control_scale: bool
         if `True`, add scale information in the bottom left corner of the visualization. The default is `True`.
-
     Returns
     -------
         `folium.Map` object with the plotted trajectories.
-
     """
-    warnings.warn("Only the trajectories of the first 10 users will be plotted. Use the argument `max_users` to specify the desired number of users, or filter the TrajDataFrame.")
+    if max_users is None:
+        max_users = 10
+        warnings.warn("Only the trajectories of the first 10 users will be plotted. Use the argument `max_users` to specify the desired number of users, or filter the TrajDataFrame.", stacklevel=STACKLEVEL)
 
     # group by user and keep only the first `max_users`
     nu = 0
@@ -155,7 +141,7 @@ def plot_trajectory(tdf, map_f=None, max_users=10, max_points=1000, style_functi
             di = 1
         else:
             if not warned: 
-                warnings.warn("If necessary, trajectories will be down-sampled to have at most `max_points` points. To avoid this, sepecify `max_points=None`.")
+                warnings.warn("If necessary, trajectories will be down-sampled to have at most `max_points` points. To avoid this, specify `max_points=None`.", stacklevel=STACKLEVEL)
                 warned = True
             di = max(1, len(traj) // max_points)
         traj = traj[::di]
@@ -207,24 +193,18 @@ def plot_points_heatmap(tdf, map_f=None, max_points=1000,
                        gradient=None):
     """
     Plot the points in a trajectories on a Folium map.
-
     Parameters
     ----------
     map_f : folium.Map, optional
         a `folium.Map` object where the trajectory will be plotted. If `None`, a new map will be created. The default is `None`.
-
     max_points : int, optional
         maximum number of points per individual to plot. The default is `1000`. If necessary, an individual's trajectory will be down-sampled to have at most `max_points` points.
-
     tiles : str, optional
         folium's `tiles` parameter. The default is 'cartodbpositron'.
-
     zoom : int, optional
         the initial zoom on the map. The default is `2`.
-
     min_opacity : float, optional
         the minimum opacity (alpha level) the heat will start at. The default is `0.5`.
-
     radius : int, optional
         radius of each "point" of the heatmap. The default is `25`.
     
@@ -238,7 +218,6 @@ def plot_points_heatmap(tdf, map_f=None, max_points=1000,
     -------
     folium.Map
         a `folium.Map` object with the plotted trajectories.
-
     Examples
     --------
     >>> import skmob
@@ -273,50 +252,39 @@ def plot_points_heatmap(tdf, map_f=None, max_points=1000,
     
     return map_f
 
-def plot_stops(stdf, map_f=None, max_users=10, tiles='cartodbpositron', zoom=12, hex_color=None, opacity=0.3,
-               radius=12, number_of_sides=4, popup=True, control_scale=True):
-
+def plot_stops(stdf, map_f=None, max_users=None, tiles='cartodbpositron', zoom=12,
+               hex_color=None, opacity=0.3, radius=12, number_of_sides=4, popup=True, control_scale=True):
     """
     :param stdf: TrajDataFrame
          Requires a TrajDataFrame with stops or clusters, output of `preprocessing.detection.stops`
          or `preprocessing.clustering.cluster`. The column `constants.LEAVING_DATETIME` must be present.
-
     :param map_f: folium.Map
         `folium.Map` object where the stops will be plotted. If `None`, a new map will be created.
-
     :param max_users: int
         maximum number of users whose stops should be plotted.
-
     :param tiles: str
         folium's `tiles` parameter.
-
     :param zoom: int
         initial zoom.
-
     :param hex_color: str
         hex color of the stop markers. If `None` a random color will be generated for each user.
-
     :param opacity: float
         opacity (alpha level) of the stop makers.
-
     :param radius: float
         size of the markers.
-
     :param number_of_sides: int
         number of sides of the markers.
-
     :param popup: bool
         if `True`, when clicking on a marker a popup window displaying information on the stop will appear.
-
     :param control_scale: bool
         if `True`, add scale information in the bottom left corner of the visualization. The default is `True`.
-
     Returns
     -------
         `folium.Map` object with the plotted stops.
-
     """
-    warnings.warn("Only the stops of the first 10 users will be plotted. Use the argument `max_users` to specify the desired number of users, or filter the TrajDataFrame.")
+    if max_users is None:
+        max_users = 10
+        warnings.warn("Only the stops of the first 10 users will be plotted. Use the argument `max_users` to specify the desired number of users, or filter the TrajDataFrame.", stacklevel=STACKLEVEL)
 
     if map_f is None:
         # initialise map
@@ -387,29 +355,22 @@ def plot_stops(stdf, map_f=None, max_users=10, tiles='cartodbpositron', zoom=12,
 def plot_diary(cstdf, user, start_datetime=None, end_datetime=None, ax=None, legend=False):
     """
         Plot a mobility diary of an individual in a TrajDataFrame. It requires a TrajDataFrame with clusters, output of `preprocessing.clustering.cluster`. The column `constants.CLUSTER` must be present.
-
         Parameters
         ----------
         user : str or int
             user identifier whose diary should be plotted.
-
         start_datetime : datetime.datetime, optional
             only stops made after this date will be plotted. If `None` the datetime of the oldest stop will be selected. The default is `None`.
-
         end_datetime : datetime.datetime, optional
             only stops made before this date will be plotted. If `None` the datetime of the newest stop will be selected. The default is `None`.
-
         ax : matplotlib.axes, optional
             axes where the diary will be plotted. If `None` a new ax is created. The default is `None`.
-
         legend : bool, optional
             If `True`, legend with cluster IDs is shown. The default is `False`.
-
         Returns
         -------
         matplotlib.axes
             the `matplotlib.axes` object of the plotted diary.
-
     """
     if ax is None:
         fig, ax = plt.subplots(figsize=(20, 2))
@@ -477,57 +438,40 @@ def plot_flows(fdf, map_f=None, min_flow=0, tiles='cartodbpositron', zoom=6, flo
     """
     :param fdf: FlowDataFrame
         `FlowDataFrame` to visualize.
-
     :param map_f: folium.Map
         `folium.Map` object where the flows will be plotted. If `None`, a new map will be created.
-
     :param min_flow: float
         only flows larger than `min_flow` will be plotted.
-
     :param tiles: str
         folium's `tiles` parameter.
-
     :param zoom: int
         initial zoom.
-
     :param flow_color: str
         color of the flow edges
-
     :param opacity: float
         opacity (alpha level) of the flow edges.
-
     :param flow_weight: float
         weight factor used in the function to compute the thickness of the flow edges.
-
     :param flow_exp: float
         weight exponent used in the function to compute the thickness of the flow edges.
-
     :param style_function: lambda function
         GeoJson style function.
-
     :param flow_popup: bool
         if `True`, when clicking on a flow edge a popup window displaying information on the flow will appear.
-
     :param num_od_popup: int
         number of origin-destination pairs to show in the popup window of each origin location.
-
     :param tile_popup: bool
         if `True`, when clicking on a location marker a popup window displaying information on the flows
         departing from that location will appear.
-
     :param radius_origin_point: float
         size of the location markers.
-
     :param color_origin_point: str
         color of the location markers.
-
     :param control_scale: bool
         if `True`, add scale information in the bottom left corner of the visualization. The default is `True`.
-
     Returns
     -------
         `folium.Map` object with the plotted flows.
-
     """
     if map_f is None:
         # initialise map
@@ -691,49 +635,36 @@ def add_to_map(gway, g, map_f, style_func_args, popup_features=[]):
 
 
 def plot_gdf(gdf, map_f=None, maxitems=-1, style_func_args={}, popup_features=[],
-             tiles='cartodbpositron', zoom=6, geom_col='geometry', control_scale=True):
-
+            tiles='cartodbpositron', zoom=6, geom_col='geometry', control_scale=True):
     """
     :param gdf: GeoDataFrame
         GeoDataFrame to visualize.
-
     :param map_f: folium.Map
         `folium.Map` object where the GeoDataFrame `gdf` will be plotted. If `None`, a new map will be created.
-
     :param maxitems: int
         maximum number of tiles to plot. If `-1`, all tiles will be plotted.
-
     :param style_func_args: dict
         dictionary to pass the following style parameters (keys) to the GeoJson style function of the polygons:
         'weight', 'color', 'opacity', 'fillColor', 'fillOpacity', 'radius'
-
     :param popup_features: list
         when clicking on a tile polygon, a popup window displaying the information in the
         columns of `gdf` listed in `popup_features` will appear.
-
     :param tiles: str
         folium's `tiles` parameter.
-
     :param zoom: int
         initial zoom.
-
     :param geom_col: str
          name of the geometry column of `gdf`.
-
     :param control_scale: bool
         if `True`, add scale information in the bottom left corner of the visualization. The default is `True`.
-
     Returns
     -------
         `folium.Map` object with the plotted GeoDataFrame.
-
     """
     if map_f is None:
         # initialise map
         lon, lat = np.mean(np.array(list(gdf[geom_col].apply(utils.get_geom_centroid).values)), axis=0)
         map_f = folium.Map(location=[lat, lon], tiles=tiles, zoom_start=zoom, control_scale=control_scale)
-
-
 
     count = 0
     for k in gdf.index:
